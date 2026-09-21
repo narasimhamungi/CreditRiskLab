@@ -1,6 +1,6 @@
 # CreditRiskLab — Model Validation Report
 
-_Generated 2026-09-21 11:37 UTC from the pipeline run. Not hand-edited._
+_Generated 2026-09-21 11:47 UTC from the pipeline run. Not hand-edited._
 
 ## 1. Scope and limitations — read before any performance figure
 
