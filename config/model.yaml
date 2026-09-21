@@ -1,0 +1,67 @@
+features:
+  # Each feature carries the credit rationale it is included for. Features without a
+  # rationale do not enter the model.
+  - { name: wc_ta,            rationale: "Liquidity buffer relative to size (Altman X1)" }
+  - { name: re_ta,            rationale: "Cumulative profitability / age proxy (Altman X2)" }
+  - { name: ebit_ta,          rationale: "Operating earning power (Altman X3)" }
+  - { name: equity_tl,        rationale: "Solvency cushion, book basis (Altman Z'' X4)" }
+  - { name: current_ratio,    rationale: "Short-term payment capacity" }
+  - { name: debt_ebitda,      rationale: "Leverage on a cash-earnings basis; primary bank metric" }
+  - { name: interest_cover,   rationale: "Ability to service debt from operations" }
+  - { name: cfo_total_debt,   rationale: "Cash generation against the full debt stack" }
+  - { name: net_margin,       rationale: "Margin erosion precedes most corporate distress" }
+  - { name: log_assets,       rationale: "Size; controls for the large-cap/distressed split" }
+  - { name: negative_equity,  rationale: "Binary structural distress flag" }
+  - { name: two_year_loss,    rationale: "Ohlson INTWO: losses in both of the last two years" }
+
+preprocessing:
+  winsorize_quantiles: [0.01, 0.99]
+  impute: median            # fitted inside the training fold only
+  scale: standard
+
+logistic:
+  penalty: l2
+  C: 1.0
+  class_weight: balanced
+  max_iter: 2000
+  solver: lbfgs
+
+gbm:
+  enabled: true
+  max_depth: 3
+  max_iter: 120
+  learning_rate: 0.05
+  min_samples_leaf: 3
+  l2_regularization: 1.0
+
+calibration:
+  # Sample default rate is ~40% by construction. Population corporate default rate is
+  # ~1-3%. Uncorrected PDs are inflated by an order of magnitude; the correction below
+  # is applied to every reported PD.
+  prior_correction: true
+  population_default_rate: 0.02
+  source: >
+    ASSUMPTION — central estimate. Long-run global corporate issuer-weighted annual
+    default rates run ~1.0-1.7% all-rated and materially higher speculative-grade
+    (S&P Global Ratings Annual Default Study; Moody's Annual Default Study). 2% is used
+    as a mid-range all-corporate figure. Sensitivity over [0.01, 0.03] is reported.
+  sensitivity_grid: [0.01, 0.02, 0.03]
+  method: isotonic          # applied out-of-fold; falls back to platt when n is small
+
+validation:
+  cv_repeats: 20
+  cv_folds: 5
+  bootstrap_iterations: 2000
+  random_state: 42
+  psi_buckets: 10
+
+grades:
+  # 7-grade masterscale. Bands are on prior-corrected PD.
+  scale:
+    - { grade: "1", label: "Minimal",     pd_upper: 0.0010 }
+    - { grade: "2", label: "Low",         pd_upper: 0.0030 }
+    - { grade: "3", label: "Moderate",    pd_upper: 0.0100 }
+    - { grade: "4", label: "Acceptable",  pd_upper: 0.0300 }
+    - { grade: "5", label: "Watch",       pd_upper: 0.0800 }
+    - { grade: "6", label: "Substandard", pd_upper: 0.2000 }
+    - { grade: "7", label: "Impaired",    pd_upper: 1.0000 }

@@ -1,0 +1,98 @@
+# LGD and EAD inputs.
+#
+# STATUS TAGS
+#   SOURCED     figure taken from a published study, citation attached.
+#   ASSUMPTION  analyst choice, anchored to a published range but not a published point
+#               estimate. Labelled so it can never be read as sourced.
+#
+# Issuer-specific workout recoveries are commercial data (Moody's Ultimate Recovery
+# Database, S&P LossStats). This project does not have them and does not pretend to.
+#
+# RECOVERY BASIS — read this before editing
+#   trading_price  bond price ~30 days after default. Altman & Kishore (1996) is on this basis.
+#   ultimate       value finally received at emergence/liquidation, discounted.
+# The two differ materially, so each class declares its basis and `risk.lgd.blended_lgd`
+# refuses to blend classes of different bases. The bond classes below are all
+# trading-price basis; the bank-loan class is ultimate and is not used by any issuer mix
+# in universe.yaml.
+
+meta:
+  currency: USD
+  note: >
+    LGD = 1 - recovery. Blended issuer LGD is the exposure-weighted average across the
+    seniority classes declared for each issuer in universe.yaml.
+
+seniority:
+  bank_loan_secured:
+    recovery_mean: 0.80
+    basis: ultimate
+    status: SOURCED
+    citation: >
+      Moody's Ultimate Recovery Database, average discounted ultimate recovery on
+      defaulted bank loans of roughly 80%, as reported in Moody's annual corporate default
+      and recovery studies (Emery, Ou, Tennant et al., Moody's Investors Service).
+
+  senior_secured:
+    recovery_mean: 0.58
+    basis: trading_price
+    status: SOURCED
+    citation: >
+      Altman & Kishore (1996), "Almost Everything You Wanted to Know about Recoveries on
+      Defaulted Bonds", Financial Analysts Journal 52(6): senior secured bonds, average
+      recovery of about $58 per $100 face, 1978-1995, measured at post-default prices.
+
+  senior_unsecured:
+    recovery_mean: 0.48
+    basis: trading_price
+    status: SOURCED
+    citation: >
+      Altman & Kishore (1996): senior unsecured bonds, average recovery of about $48 per
+      $100 face, post-default prices.
+
+  senior_subordinated:
+    recovery_mean: 0.34
+    basis: trading_price
+    status: SOURCED
+    citation: "Altman & Kishore (1996): senior subordinated bonds, about $34 per $100 face."
+
+  subordinated:
+    recovery_mean: 0.31
+    basis: trading_price
+    status: SOURCED
+    citation: "Altman & Kishore (1996): subordinated bonds, about $31 per $100 face."
+
+adjustments:
+  industry_distress_haircut:
+    value: 0.10
+    applies_to: [senior_unsecured, senior_subordinated, subordinated]
+    status: ASSUMPTION
+    citation: >
+      Anchored to Acharya, Bharath & Srinivasan (2007), "Does Industry-Wide Distress Affect
+      Defaulted Firms? Evidence from Creditor Recoveries", Journal of Financial Economics
+      85(3), which finds materially lower recoveries when the defaulter's industry is
+      distressed. The 10-point figure is an analyst choice within that finding, not a
+      published point estimate.
+    enabled: false      # off by default; enable only with a documented sector call
+
+  lgd_floor: 0.05
+  lgd_cap: 0.95
+
+ead:
+  method: drawn_plus_ccf
+  credit_conversion_factors:
+    revolving_credit_facility:
+      value: 0.75
+      status: SOURCED
+      citation: >
+        Basel II foundation IRB supervisory CCF of 75% for committed undrawn facilities
+        (BCBS, 2006). Consistent with Jimenez, Lopez & Saurina (2009), "Empirical Analysis
+        of Corporate Credit Lines", Review of Financial Studies 22(12), who document sharply
+        rising drawdowns as borrowers approach default.
+    term_loan:
+      value: 1.00
+      status: SOURCED
+      citation: "Fully drawn at origination; no undrawn commitment to convert."
+    bond:
+      value: 1.00
+      status: SOURCED
+      citation: "Bonds are fully funded; EAD equals outstanding principal."

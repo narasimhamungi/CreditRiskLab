@@ -1,0 +1,149 @@
+# CreditRiskLab universe
+#
+# FACT DISCIPLINE
+#   cik:            Quoted 10-digit strings (unquoted, YAML reads 0000020520 as octal).
+#                   Each was located on SEC archive pages; `cli resolve` re-verifies every one
+#                   against EDGAR's current or former registrant name before it is trusted.
+#   default_date:   Chapter 11 petition date. Marked `verified: false` until confirmed.
+#                   `cli verify-defaults` searches the issuer's full EDGAR history for the
+#                   bankruptcy 8-K (Item 1.03) in a +/- 30 day window around the date and
+#                   sets verified: true only when one is found.
+#   Nothing in this file is used as ground truth until both flags are true.
+
+meta:
+  horizon_days: 365          # default within 12 months of the as-of date => label 1
+  min_filing_lag_days: 0     # filings are used from their actual SEC `filed` date
+  observation_window: ["2015-01-01", "2024-12-31"]
+
+defaults:
+  - name: "J.C. Penney Company, Inc."
+    ticker: JCP
+    edgar_name_query: "J C PENNEY"
+    cik: "0001166126"
+    sector: "Retail — department stores"
+    default_date: "2020-05-15"
+    default_type: chapter_11
+    verified: true
+    exposure:                # used for EAD/LGD segmentation, see recovery_rates.yaml
+      senior_secured: 0.55
+      senior_unsecured: 0.45
+
+  - name: "Hertz Global Holdings, Inc."
+    ticker: HTZ
+    edgar_name_query: "HERTZ GLOBAL HOLDINGS"
+    cik: "0001657853"
+    sector: "Consumer services — vehicle rental"
+    default_date: "2020-05-22"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.70
+      senior_unsecured: 0.30
+
+  - name: "Frontier Communications Corporation"
+    ticker: FTR
+    edgar_name_query: "FRONTIER COMMUNICATIONS"
+    cik: "0000020520"
+    sector: "Telecom"
+    default_date: "2020-04-14"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.35
+      senior_unsecured: 0.65
+
+  - name: "Chesapeake Energy Corporation"
+    ticker: CHK
+    edgar_name_query: "CHESAPEAKE ENERGY"
+    cik: "0000895126"
+    sector: "Energy — E&P"
+    default_date: "2020-06-28"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.45
+      senior_unsecured: 0.55
+
+  - name: "Revlon, Inc."
+    ticker: REV
+    edgar_name_query: "REVLON"
+    cik: "0000887921"
+    sector: "Consumer staples — cosmetics"
+    default_date: "2022-06-15"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.60
+      senior_unsecured: 0.40
+
+  - name: "Party City Holdco Inc."
+    ticker: PRTY
+    edgar_name_query: "PARTY CITY HOLDCO"
+    cik: "0001592058"
+    sector: "Retail — specialty"
+    default_date: "2023-01-17"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.65
+      senior_unsecured: 0.35
+
+  - name: "Bed Bath & Beyond Inc."
+    ticker: BBBY
+    edgar_name_query: "BED BATH & BEYOND"
+    cik: "0000886158"
+    sector: "Retail — home goods"
+    default_date: "2023-04-23"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.50
+      senior_unsecured: 0.50
+
+  - name: "Rite Aid Corporation"
+    ticker: RAD
+    edgar_name_query: "RITE AID"
+    cik: "0000084129"
+    sector: "Retail — pharmacy"
+    default_date: "2023-10-15"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.70
+      senior_unsecured: 0.30
+
+  - name: "iHeartMedia, Inc."
+    ticker: IHRT
+    edgar_name_query: "IHEARTMEDIA"
+    cik: "0001400891"
+    sector: "Media — broadcasting"
+    default_date: "2018-03-14"
+    default_type: chapter_11
+    verified: true
+    exposure:
+      senior_secured: 0.75
+      senior_unsecured: 0.25
+
+  - name: "Toys \"R\" Us, Inc."
+    ticker: TOYS
+    edgar_name_query: "TOYS R US"
+    cik: "0001005414"
+    sector: "Retail — specialty"
+    default_date: "2017-09-18"
+    default_type: chapter_11
+    verified: true   # MANUAL: 8-K filed 2017-09-20 (acc. 0001005414-17-000029), Item 7.01, states Ch.11 petition filed 2017-09-18; no Item 1.03 8-K exists
+    exposure:
+      senior_secured: 0.60
+      senior_unsecured: 0.40
+
+# Non-default cohort.
+# Inherited from Trellis's validated universe. `scripts/sync_trellis_universe.py` reads the
+# installed Trellis package and appends any validated issuer not already listed here, so
+# this list does not drift from Trellis. The five below are the confirmed core; extend to
+# Trellis's full 13 by running the sync script.
+non_defaults:
+  - { name: "Apple Inc.",                ticker: AAPL, edgar_name_query: "APPLE INC",        cik: "0000320193", sector: "Technology" }
+  - { name: "Amazon.com, Inc.",          ticker: AMZN, edgar_name_query: "AMAZON COM INC",   cik: "0001018724", sector: "Retail — e-commerce" }
+  - { name: "Costco Wholesale Corp.",    ticker: COST, edgar_name_query: "COSTCO WHOLESALE", cik: "0000909832", sector: "Retail — warehouse club" }
+  - { name: "NIKE, Inc.",                ticker: NKE,  edgar_name_query: "NIKE INC",         cik: "0000320187", sector: "Consumer discretionary" }
+  - { name: "Johnson & Johnson",         ticker: JNJ,  edgar_name_query: "JOHNSON & JOHNSON",cik: "0000200406", sector: "Healthcare — pharma" }

@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Raw SEC payloads and derived artefacts are reproducible; they are not committed.
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/outputs/*
+!data/outputs/.gitkeep
