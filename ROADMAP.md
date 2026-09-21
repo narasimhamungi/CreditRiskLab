@@ -1,7 +1,8 @@
 # CreditRiskLab — Build Roadmap
 
-Project 5 of an applied finance/analytics portfolio. Consumes Trellis as an installed
-package; does not modify it.
+Project 5 of an applied finance/analytics portfolio. Planned to consume Trellis as an
+installed package; in the real run every row came from the direct EDGAR client because
+Trellis does not carry SEC filing dates. Trellis was not modified.
 
 **Locked scope decision (made before any code):** default labels come from real
 non-financial US issuers that actually filed for bankruptcy, with pre-filing 10-Ks on
@@ -112,8 +113,8 @@ Winsorised at 1/99; missing values median-imputed **within the training fold onl
 | 7 LGD / EAD / EL | Built — plus Basel IRB capital, reconciled to BCBS risk weights |
 | 8 Grades | Built |
 | 9 Reporting | Built — real runs publish to `docs/results/`; synthetic runs cannot |
-| 10 Docs | Built — README findings section held until the first real run |
-| **Real-data run** | **Pending** — CIK resolution, default verification, ingest, run |
+| 10 Docs | Built — README findings written from the real run |
+| **Real-data run** | **Done** — 15 CIKs verified, 10 default events confirmed, 8,671 XBRL facts, 105 observations |
 
 Tests: 103, offline, ~8 seconds.
 

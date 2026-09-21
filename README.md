@@ -4,12 +4,13 @@ Probability of default, LGD, EAD, expected loss and Basel IRB capital — built 
 filings from US companies that actually went bankrupt, validated against the published
 distress models a credit analyst would reach for first.
 
-Project 5 of an applied finance/analytics portfolio. Consumes
-[Trellis](https://github.com/narasimhamungi/trellis) as an installed package; does not modify it.
+Project 5 of an applied finance/analytics portfolio, alongside
+[Trellis](https://github.com/narasimhamungi/trellis).
 
-> **Status: machinery complete, first real run pending.** 103 tests pass on synthetic
-> fixtures. No performance figure is claimed below until the pipeline has run on verified
-> SEC data — see [Key findings](#key-findings).
+> **Headline:** on 105 issuer-years from real SEC filings, the fitted PD model reaches an
+> out-of-fold AUC of 0.82 (95% CI 0.68–0.93) against 0.77 for Altman Z'' — and a paired,
+> issuer-level bootstrap cannot tell them apart. That null result is the finding, and it is
+> reported as one.
 
 ---
 
@@ -39,8 +40,8 @@ This project is built to expose each of those rather than benefit from them.
 
 | Layer | What it does |
 |---|---|
-| Universe | 10 non-financial Chapter 11 filers (2017–2023) + investment-grade controls from Trellis. The pipeline refuses to train until every CIK is verified against EDGAR and every default date is matched to an Item 1.03 bankruptcy 8-K. |
-| Ingestion | SEC XBRL `companyfacts`, Trellis-first with a direct EDGAR fallback. The SEC `filed` date travels with every fact; a `source` column records which path each row took. |
+| Universe | 10 non-financial Chapter 11 filers (2017–2023) + 5 investment-grade controls from Trellis's universe. The pipeline refuses to train until every CIK is verified against EDGAR and every default date is confirmed: 9 of 10 matched an Item 1.03 bankruptcy 8-K within four days; Toys "R" Us disclosed its petition under Item 7.01 instead and is verified manually, with the accession number recorded in the config. |
+| Ingestion | SEC XBRL `companyfacts` via a direct EDGAR client. The SEC `filed` date travels with every fact. A Trellis adapter exists, but Trellis does not carry filing dates, which the point-in-time guarantee requires — so every row in the real run came from EDGAR, and the `source` column says so. |
 | Point-in-time | Filters on `filed <= as_of` **before** selecting the latest reported vintage — the reverse order is the classic look-ahead bug. Stale filings are dropped, not carried forward. |
 | Panel | Discrete-time hazard design (Shumway, 2001): one row per issuer-year, label = default within 12 months. |
 | Models | Penalised logistic regression (primary), gradient boosting (challenger), Altman Z''(EM) and Ohlson O-score (benchmarks). |
@@ -96,6 +97,10 @@ Written before the results, so they cannot be softened after them.
 - **Leases.** Debt excludes operating lease liabilities; ASC 842 (2019) also creates a
   structural break in retailer balance sheets mid-panel.
 - **EAD is a proxy** — reported total debt, fully drawn. No public filer discloses a facility schedule.
+- **Tag approximations.** Where an issuer reported only an approximate XBRL tag (net income to
+  common for Frontier; interest excluding amortisation for Revlon 2020), it is used and flagged
+  in the audit trail. Hertz reports an unclassified balance sheet, so its working-capital ratios
+  do not exist and are imputed.
 - **LGD is study-average**, not issuer workout data (commercial, Moody's/S&P).
 - **No macro covariates** — point-in-time vs. through-the-cycle PD is noted, not modelled.
 
@@ -103,13 +108,36 @@ This is a validated-methodology demonstration, not a production PD model.
 
 ## Key findings
 
-**Pending the first real run.** Results are written to `docs/results/MODEL_VALIDATION.md` by
-`creditrisklab run` and will be summarised here from that file — not before.
+Full generated report: [`docs/results/MODEL_VALIDATION.md`](docs/results/MODEL_VALIDATION.md).
 
-What the offline suite establishes about the *machinery* (not about any issuer): the
-point-in-time invariant holds on every panel row; the benchmark test returns a null result
-when two scores are indistinguishable; the hardness check flags an easy control design; the
-IRB function reconciles to published Basel risk weights.
+**1. The fitted model does not demonstrably beat Altman Z''.** Out-of-fold AUC 0.82
+(95% CI 0.68–0.93) against 0.77 for Z'' on the same 105 observations; the paired issuer-level
+bootstrap interval for the difference includes zero. The verdict held across four real runs as
+data coverage was repaired (AUC 0.833 → 0.835 → 0.834 → 0.820): completing the data made the
+model slightly worse, so imputation had not been flattering it. With ten default events, the
+honest statement is "not distinguishable", not "better".
+
+**2. Altman Z'' fails in both directions, for accounting reasons rather than credit reasons.**
+Median Z'' puts Amazon (1.33) and Costco (2.02) in the grey zone — both run near-zero working
+capital by design. It puts Bed Bath & Beyond at 8.16, deep in the safe zone, because retained
+earnings exceed total assets (RE/TA 1.60), consistent with a buyback programme held in treasury
+stock rather than retired. The same economic act — repurchasing shares — moves Z'' in opposite
+directions depending on how it is booked.
+
+**3. Point-in-time discipline changes real inputs.** Frontier's clean FY2015 net income
+(−$196M) was first tagged in a filing made in March 2018. At a 2016 observation date the only
+visible figure was net income to common (−$316M). The model uses what was knowable at the time;
+a hindsight panel would silently use the later number.
+
+**4. Prior correction matters more than model choice for the loss numbers.** Mean predicted PD
+is 9.6% on the oversampled sample and 2.3% after correction to an assumed 2% population default
+rate. Every expected-loss and capital figure downstream moves by that factor of four.
+
+**5. XBRL coverage is the practical bottleneck.** The first run had 36–38% missingness in
+coverage and cash-flow features. The causes were tag choices, not missing disclosure: no
+operating-income line at J&J, Nike, Rite Aid and Hertz; cash flow tagged as continuing
+operations; debt tagged together with lease obligations; ASC 606 revenue-tag migration. Each fix
+is driven by evidence from `scripts/diagnose_coverage.py` and pinned by a regression test.
 
 ## Insight demonstrated
 
