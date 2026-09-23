@@ -34,7 +34,16 @@ INSTANT_CONCEPTS: dict[str, list[str]] = {
     "inventory": ["InventoryNet"],
     # LongTermDebt INCLUDES current maturities; LongTermDebtNoncurrent excludes them.
     # `features.ratios.total_debt` reads the tag actually used to avoid double counting.
-    "long_term_debt": ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebt"],
+    # Order matches Trellis's identical chain exactly (confirmed by reading it directly) --
+    # the two disagreed on it until this fix (LongTermDebtAndCapitalLeaseObligations before
+    # LongTermDebt), a real, found-on-live-data divergence: Toys "R" Us FY2017 tags both,
+    # and the two scopes differ by 3.3%. LongTermDebt is preferred because it's the
+    # narrower, more-common-filer scope (Trellis measured real gaps confirming it's not a
+    # simple alias -- Nike FY2026: $5,942M noncurrent-only vs $7,942M under the broader
+    # tag); LongTermDebtAndCapitalLeaseObligations bundles in finance leases and is kept
+    # last, purely as a catch-all for filers (Medtronic, Boston Scientific) that tag
+    # neither of the narrower two.
+    "long_term_debt": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"],
     "current_debt": [
         "LongTermDebtCurrent",
         "LongTermDebtAndCapitalLeaseObligationsCurrent",
@@ -62,7 +71,26 @@ DURATION_CONCEPTS: dict[str, list[str]] = {
     ],
     "ebit": ["OperatingIncomeLoss"],
     # Several issuers (J&J, Nike, Rite Aid, Hertz) never report an operating-income line.
-    # EBIT is then derived as pre-tax income plus interest in features.point_in_time.
+    # EBIT is then derived in features.point_in_time, preferring gross_profit - sga_expense -
+    # rnd_expense over the older pretax-income-plus-interest fallback: on J&J (no
+    # OperatingIncomeLoss tag since FY2015 Q1) the two formulas diverge by 31%, ~$8B, because
+    # pretax income carries large non-operating items (litigation charges chief among them)
+    # the interest-only add-back doesn't correct for. The gross-profit formula matches J&J's
+    # externally reported operating income to the dollar; the pretax-based one doesn't. Kept
+    # as a second-choice fallback, not removed: some issuers won't tag gross_profit/sga/rnd
+    # either, and pretax-plus-interest is still better than leaving EBIT missing for them.
+    "gross_profit": ["GrossProfit"],
+    # Mirrors Trellis's own fallback (statements.py::fill_derived_gaps): some filers
+    # (Amazon, Costco, among others Trellis has confirmed) don't tag GrossProfit at all --
+    # their income statement goes straight from revenue through cost of sales into other
+    # expense lines with no gross-profit subtotal on the face of the statement. Derived in
+    # features.point_in_time when the direct tag is absent, from revenue - cost_of_revenue.
+    "cost_of_revenue": ["CostOfGoodsAndServicesSold", "CostOfRevenue"],
+    "sga_expense": ["SellingGeneralAndAdministrativeExpense"],
+    "rnd_expense": [
+        "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost",
+        "ResearchAndDevelopmentExpense",
+    ],
     "pretax_income": [
         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
         "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments",

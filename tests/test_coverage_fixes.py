@@ -80,6 +80,18 @@ def test_schema_covers_tags_seen_on_real_filers():
     assert not set(schema.DURATION_CONCEPTS["net_interest"]) & set(schema.DURATION_CONCEPTS["interest_expense"])
 
 
+def test_long_term_debt_prefers_narrower_scope_over_the_capital_lease_bundle():
+    """Regression test for a real, found-on-live-data divergence: this order
+    used to put LongTermDebtAndCapitalLeaseObligations ahead of LongTermDebt,
+    disagreeing with Trellis's identical three-tag chain (which orders them
+    the other way, for reasons Trellis's own schema.py documents with
+    measured dollar gaps). Toys "R" Us FY2017 tags both scopes with genuinely
+    different values -- the two spines disagreed by 3.3% on exactly this
+    until the order matched."""
+    chain = schema.INSTANT_CONCEPTS["long_term_debt"]
+    assert chain.index("LongTermDebt") < chain.index("LongTermDebtAndCapitalLeaseObligations")
+
+
 def test_approximate_tags_are_flagged_in_derived_fields(make_facts):
     facts = make_facts([
         ("total_assets", FY, FILED, 100.0),

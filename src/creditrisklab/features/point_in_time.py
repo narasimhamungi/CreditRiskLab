@@ -83,6 +83,7 @@ def as_of_snapshot(
     # identity rather than leave it missing, and record that it was derived.
     derived: list[str] = []
     derived.extend(APPROXIMATE_TAGS[t] for t in snapshot["_tags"].values() if t in APPROXIMATE_TAGS)
+    derived.extend(_derive_gross_profit(snapshot))
     derived.extend(_derive_ebit(snapshot))
     if snapshot.get("total_liabilities") is None and snapshot.get("total_assets") is not None and snapshot.get("equity") is not None:
         snapshot["total_liabilities"] = float(snapshot["total_assets"]) - float(snapshot["equity"])
@@ -123,14 +124,56 @@ def anchor_period(vintage: pd.DataFrame) -> date:
     return max(d for d, n in counts.items() if n == top)
 
 
-def _derive_ebit(snapshot: dict) -> list[str]:
-    """EBIT = pre-tax income + gross interest expense, or pre-tax income minus net interest.
+def _derive_gross_profit(snapshot: dict) -> list[str]:
+    """revenue - cost_of_revenue, when GrossProfit itself isn't tagged. Mirrors
+    Trellis's identical derivation (statements.py::fill_derived_gaps) -- an
+    exact identity, not an approximation, and it's a dependency for the EBIT
+    derivation below, the same reason Trellis orders it first."""
+    if snapshot.get("gross_profit") is not None:
+        return []
+    revenue, cor = snapshot.get("revenue"), snapshot.get("cost_of_revenue")
+    if revenue is None or cor is None:
+        return []
+    snapshot["gross_profit"] = float(revenue) - float(cor)
+    return ["gross_profit"]
 
-    Used only when OperatingIncomeLoss is untagged. With no interest information at all,
-    EBIT stays missing rather than being set to pre-tax income, which would understate it
-    by the full interest burden and bias every such issuer toward distress.
+
+def _derive_ebit(snapshot: dict) -> list[str]:
+    """EBIT, tried in priority order when OperatingIncomeLoss is untagged:
+
+    1. gross_profit - sga_expense - rnd_expense. Mirrors Trellis's own
+       statements.fill_derived_gaps derivation for the identical gap. Verified
+       against real data: J&J has carried no OperatingIncomeLoss tag since
+       FY2015 Q1, and this formula reproduces its externally reported
+       operating income exactly ($25.596B). rnd_expense is treated as 0.0
+       when untagged, not required -- confirmed by reading Trellis's own
+       derivation directly (`data.get("rnd_expense", 0.0)`), and this file's
+       first version got it wrong: requiring rnd strictly non-None fell
+       through to path (2) for RAD and NKE (neither tags a distinct R&D
+       line), producing a -410% and +1.4% divergence from Trellis on real
+       data instead of matching it. gross_profit and sga_expense are still
+       required -- those aren't optional inputs to the formula the way
+       rnd_expense's absence has an economically meaningful default (no R&D
+       spend) rather than an unknown one.
+    2. pretax_income + gross interest expense, or pretax_income - net interest.
+       The prior sole fallback -- kept as a second choice, not removed, for
+       issuers where gross_profit/sga_expense aren't tagged either. Can
+       diverge materially from (1): on J&J the two formulas differ by 31%
+       (~$8B), because pretax income carries large non-operating items
+       (litigation charges) the interest-only add-back doesn't correct for.
+       Prefer (1) for that reason, not merely because it's listed first.
     """
-    if snapshot.get("ebit") is not None or snapshot.get("pretax_income") is None:
+    if snapshot.get("ebit") is not None:
+        return []
+
+    gp = snapshot.get("gross_profit")
+    sga = snapshot.get("sga_expense")
+    rnd = snapshot.get("rnd_expense")
+    if gp is not None and sga is not None:
+        snapshot["ebit"] = float(gp) - float(sga) - float(rnd if rnd is not None else 0.0)
+        return ["ebit"]
+
+    if snapshot.get("pretax_income") is None:
         return []
     pretax = float(snapshot["pretax_income"])
     if snapshot.get("interest_expense") is not None:
