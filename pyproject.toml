@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "creditrisklab"
-version = "0.1.0"
+version = "0.2.0"
 description = "PD / LGD / EAD / expected loss on real SEC filing data, with point-in-time discipline and full model validation"
 readme = "README.md"
 requires-python = ">=3.10"
