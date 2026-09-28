@@ -55,7 +55,7 @@ def cmd_demo(args: argparse.Namespace) -> int:
 
 def cmd_resolve(args: argparse.Namespace) -> int:
     """Verify every CIK against EDGAR's registrant name (current or former) and write the
-    verified ones into config/universe.yaml. A CIK is written only after the name matches."""
+    verified ones into src/creditrisklab/config/universe.yaml. A CIK is written only after the name matches."""
     from creditrisklab.config import config_dir
     from creditrisklab.ingest.edgar_client import resolve_cik_by_ticker, verify_cik
     from creditrisklab.universe import update_universe_file
@@ -86,7 +86,7 @@ def cmd_resolve(args: argparse.Namespace) -> int:
     failed = frame.loc[~frame["verified"], "ticker"].tolist()
     if failed:
         print(f"\nNOT VERIFIED: {failed}. Find the CIK on EDGAR company search, put it in "
-              "config/universe.yaml, and re-run. Unverified CIKs are never used.")
+              "src/creditrisklab/config/universe.yaml, and re-run. Unverified CIKs are never used.")
         return 1
     print("\nall CIKs verified")
     return 0

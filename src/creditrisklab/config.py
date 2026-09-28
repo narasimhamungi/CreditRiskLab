@@ -16,15 +16,30 @@ import yaml
 
 
 def project_root() -> Path:
-    """Repo root, overridable for tests via CREDITRISKLAB_ROOT."""
+    """Where data/ (raw EDGAR cache, interim, outputs) lives.
+
+    CREDITRISKLAB_ROOT overrides it (tests use this). In a source checkout it is the repo
+    root; in a plain pip install -- where two folders above this file is the virtualenv's
+    Lib/ directory, not a project -- it is ~/.creditrisklab. The old unconditional
+    parents[2] rule only ever worked from a checkout: a pinned install from a git tag
+    (found by Keystone's clean install) looked for config under .venv/Lib/config."""
     env = os.environ.get("CREDITRISKLAB_ROOT")
     if env:
         return Path(env)
-    return Path(__file__).resolve().parents[2]
+    repo = Path(__file__).resolve().parents[2]
+    if (repo / "pyproject.toml").exists():
+        return repo
+    return Path.home() / ".creditrisklab"
 
 
 def config_dir() -> Path:
-    return project_root() / "config"
+    """The model configuration (training universe, features, recovery rates) is part of
+    the model, so it ships INSIDE the package and is pinned with it. CREDITRISKLAB_ROOT, when
+    set, still points at <root>/config (tests copy the config there and edit it)."""
+    env = os.environ.get("CREDITRISKLAB_ROOT")
+    if env:
+        return Path(env) / "config"
+    return Path(__file__).resolve().parent / "config"
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:

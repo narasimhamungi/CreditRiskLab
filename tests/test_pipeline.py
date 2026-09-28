@@ -40,8 +40,7 @@ def test_report_puts_limitations_before_performance(run_result, recovery_cfg):
 def test_demo_output_is_watermarked(tmp_path, monkeypatch):
     from creditrisklab import cli, config
 
-    root = config.project_root()
-    shutil.copytree(root / "config", tmp_path / "config")
+    shutil.copytree(config.config_dir(), tmp_path / "config")
     monkeypatch.setenv("CREDITRISKLAB_ROOT", str(tmp_path))
     for loader in (config.load_universe, config.load_model_config, config.load_recovery_config):
         loader.cache_clear()
