@@ -92,6 +92,9 @@ Written before the results, so they cannot be softened after them.
 - **Easy control group.** Investment-grade controls make discrimination easy. The run measures
   this directly (share of surviving-issuer observations with debt/EBITDA > 4x or cover < 2x) and
   prints a verdict. A rule-selected distressed-survivor cohort is the planned fix.
+  *Added after the run, not part of the pre-registered text:* measured at **2.0% — verdict
+  EASY TASK** ([MODEL_VALIDATION.md §1](docs/results/MODEL_VALIDATION.md)), which is why both
+  the model and Altman Z'' score high and cannot be told apart.
 - **Prior correction is not a representativeness fix.** It corrects the base rate, not a
   control group that is not a random sample of survivors. PD levels are indicative.
 - **Leases.** Debt excludes operating lease liabilities; ASC 842 (2019) also creates a
@@ -184,7 +187,7 @@ src/creditrisklab/
   validation/      discrimination, calibration tests, stability, backtests
   risk/            LGD, EAD, expected loss + IRB capital, grades
   reporting/       generated validation report and charts
-tests/             103 offline tests
+tests/             110 offline tests
 ```
 
 See [`ROADMAP.md`](ROADMAP.md) for the build plan and the scoping decision behind the label source.
