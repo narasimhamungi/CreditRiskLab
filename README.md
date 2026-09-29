@@ -8,7 +8,7 @@ Project 5 of an applied finance/analytics portfolio, alongside
 [Trellis](https://github.com/narasimhamungi/trellis).
 
 > **Headline:** on 105 issuer-years from real SEC filings, the fitted PD model reaches an
-> out-of-fold AUC of 0.82 (95% CI 0.68–0.93) against 0.77 for Altman Z'' — and a paired,
+> out-of-fold AUC of 0.824 (95% CI 0.679–0.935) against 0.773 for Altman Z'' — and a paired,
 > issuer-level bootstrap cannot tell them apart. That null result is the finding, and it is
 > reported as one.
 
@@ -113,11 +113,13 @@ This is a validated-methodology demonstration, not a production PD model.
 
 Full generated report: [`docs/results/MODEL_VALIDATION.md`](docs/results/MODEL_VALIDATION.md).
 
-**1. The fitted model does not demonstrably beat Altman Z''.** Out-of-fold AUC 0.82
-(95% CI 0.68–0.93) against 0.77 for Z'' on the same 105 observations; the paired issuer-level
-bootstrap interval for the difference includes zero. The verdict held across four real runs as
-data coverage was repaired (AUC 0.833 → 0.835 → 0.834 → 0.820): completing the data made the
-model slightly worse, so imputation had not been flattering it. With ten default events, the
+**1. The fitted model does not demonstrably beat Altman Z''.** Out-of-fold AUC 0.824
+(95% CI 0.679–0.935) against 0.773 for Z'' on the same 105 observations; the paired issuer-level
+bootstrap interval for the difference (+0.052, [−0.097, 0.220]) includes zero. The verdict held
+across four real runs as data coverage was repaired (AUC 0.833 → 0.835 → 0.834 → 0.820), and
+again after v0.2.0's EBIT, gross-profit and long-term-debt fixes (0.824, report regenerated
+29 Sep 2026): completing the data made the model slightly worse than the first run, so
+imputation had not been flattering it. With ten default events, the
 honest statement is "not distinguishable", not "better".
 
 **2. Altman Z'' fails in both directions, for accounting reasons rather than credit reasons.**
@@ -133,7 +135,7 @@ visible figure was net income to common (−$316M). The model uses what was know
 a hindsight panel would silently use the later number.
 
 **4. Prior correction matters more than model choice for the loss numbers.** Mean predicted PD
-is 9.6% on the oversampled sample and 2.3% after correction to an assumed 2% population default
+is 9.7% on the oversampled sample and 2.3% after correction to an assumed 2% population default
 rate. Every expected-loss and capital figure downstream moves by that factor of four.
 
 **5. XBRL coverage is the practical bottleneck.** The first run had 36–38% missingness in
