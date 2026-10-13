@@ -57,7 +57,7 @@ Winsorised at 1/99; missing values median-imputed **within the training fold onl
 
 ## Stage 5 — Calibration
 
-- Sample default rate ≈ 40%. Population corporate default rate ≈ 1–3%.
+- Sample default rate 9.5% (10 default observations in 105 issuer-years). Population corporate default rate ≈ 1–3%.
 - Uncorrected probabilities would overstate PD by an order of magnitude.
 - Prior correction applied (rare-event odds shift) to every reported PD.
 - This is stated in the README, not buried — it is the single most common silent error in
@@ -105,7 +105,7 @@ Winsorised at 1/99; missing values median-imputed **within the training fold onl
 |---|---|
 | 0 Foundations | Built — package, config validation, CI workflow |
 | 1 Universe | Built — gate enforces verified CIKs and verified default events |
-| 2 Point-in-time ingestion | Built — tag migration and wrong-fallback bugs fixed and tested |
+| 2 Point-in-time ingestion | Built — tag migration and fallback chains tested |
 | 3 Features | Built — 12 ratios with sign priors; lease adjustment deferred (see limits) |
 | 4 Models | Built |
 | 5 Calibration | Built — cross-fitted by issuer, prior-corrected, sensitivity grid |
@@ -116,11 +116,11 @@ Winsorised at 1/99; missing values median-imputed **within the training fold onl
 | 10 Docs | Built — README findings written from the real run |
 | **Real-data run** | **Done** — 15 CIKs verified, 10 default events confirmed, 8,671 XBRL facts, 105 observations |
 
-Tests: 103, offline, ~8 seconds.
+Tests: 110, offline.
 
 ## Known limits, declared up front
 
-1. ~23 issuers, ~10 default events. Statistical power is low; CIs will be wide and are reported as such.
+1. 15 issuers, 10 default events. Statistical power is low; CIs are wide and are reported as such.
 2. Non-defaulters are large-cap IG; the model discriminates "large IG vs. distressed" rather than fine gradations within speculative grade.
 3. Recovery assumptions are from published studies, not issuer-specific workout data (commercial, Moody's/S&P).
 4. No macro covariates in v1 — a through-the-cycle vs. point-in-time PD distinction is noted, not implemented.

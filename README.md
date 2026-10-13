@@ -1,5 +1,7 @@
 # CreditRiskLab
 
+[![CI](https://github.com/narasimhamungi/CreditRiskLab/actions/workflows/tests.yml/badge.svg)](https://github.com/narasimhamungi/CreditRiskLab/actions/workflows/tests.yml)
+
 Probability of default, LGD, EAD, expected loss and Basel IRB capital — built on real SEC
 filings from US companies that actually went bankrupt, validated against the published
 distress models a credit analyst would reach for first.
@@ -115,12 +117,11 @@ Full generated report: [`docs/results/MODEL_VALIDATION.md`](docs/results/MODEL_V
 
 **1. The fitted model does not demonstrably beat Altman Z''.** Out-of-fold AUC 0.824
 (95% CI 0.679–0.935) against 0.773 for Z'' on the same 105 observations; the paired issuer-level
-bootstrap interval for the difference (+0.052, [−0.097, 0.220]) includes zero. The verdict held
-across four real runs as data coverage was repaired (AUC 0.833 → 0.835 → 0.834 → 0.820), and
-again after v0.2.0's EBIT, gross-profit and long-term-debt fixes (0.824, report regenerated
-29 Sep 2026): completing the data made the model slightly worse than the first run, so
-imputation had not been flattering it. With ten default events, the
-honest statement is "not distinguishable", not "better".
+bootstrap interval for the difference (+0.052, [−0.097, 0.220]) includes zero. The verdict is
+stable across data-coverage versions: AUC stayed within 0.820–0.835 as XBRL coverage was
+completed (0.824 in the published run, 29 Sep 2026), and more complete data did not raise it,
+so imputation is not flattering the model. With ten default events, the honest statement is
+"not distinguishable", not "better".
 
 **2. Altman Z'' fails in both directions, for accounting reasons rather than credit reasons.**
 Median Z'' puts Amazon (1.33) and Costco (2.02) in the grey zone — both run near-zero working
@@ -138,11 +139,11 @@ a hindsight panel would silently use the later number.
 is 9.7% on the oversampled sample and 2.3% after correction to an assumed 2% population default
 rate. Every expected-loss and capital figure downstream moves by that factor of four.
 
-**5. XBRL coverage is the practical bottleneck.** The first run had 36–38% missingness in
-coverage and cash-flow features. The causes were tag choices, not missing disclosure: no
+**5. XBRL coverage is the practical bottleneck.** Primary tags alone leave 36–38% missingness in
+coverage and cash-flow features. The causes are tag choices, not missing disclosure: no
 operating-income line at J&J, Nike, Rite Aid and Hertz; cash flow tagged as continuing
-operations; debt tagged together with lease obligations; ASC 606 revenue-tag migration. Each fix
-is driven by evidence from `scripts/diagnose_coverage.py` and pinned by a regression test.
+operations; debt tagged together with lease obligations; ASC 606 revenue-tag migration. Each
+fallback is driven by evidence from `scripts/diagnose_coverage.py` and pinned by a regression test.
 
 ## Insight demonstrated
 

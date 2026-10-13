@@ -147,11 +147,10 @@ def _derive_ebit(snapshot: dict) -> list[str]:
        FY2015 Q1, and this formula reproduces its externally reported
        operating income exactly ($25.596B). rnd_expense is treated as 0.0
        when untagged, not required -- confirmed by reading Trellis's own
-       derivation directly (`data.get("rnd_expense", 0.0)`), and this file's
-       first version got it wrong: requiring rnd strictly non-None fell
-       through to path (2) for RAD and NKE (neither tags a distinct R&D
-       line), producing a -410% and +1.4% divergence from Trellis on real
-       data instead of matching it. gross_profit and sga_expense are still
+       derivation directly (`data.get("rnd_expense", 0.0)`). Requiring rnd
+       strictly non-None would fall through to path (2) for RAD and NKE
+       (neither tags a distinct R&D line), producing a -410% and +1.4%
+       divergence from Trellis on real data instead of matching it. gross_profit and sga_expense are still
        required -- those aren't optional inputs to the formula the way
        rnd_expense's absence has an economically meaningful default (no R&D
        spend) rather than an unknown one.

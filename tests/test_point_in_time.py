@@ -40,7 +40,7 @@ def test_total_liabilities_derived_when_untagged(make_facts):
 
 
 def test_ebit_prefers_gross_profit_derivation_over_pretax_plus_interest(make_facts):
-    """The actual bug this guards against: J&J has carried no OperatingIncomeLoss
+    """The case this guards against: J&J has carried no OperatingIncomeLoss
     tag since FY2015 Q1, and the two derivations disagree by 31% (~$8B) on its
     real FY2025 figures. gross_profit - sga_expense - rnd_expense matches J&J's
     externally reported operating income ($25.596B) to the dollar; pretax_income
@@ -103,10 +103,9 @@ def test_ebit_falls_back_when_sga_expense_is_missing(make_facts):
 
 
 def test_ebit_treats_missing_rnd_expense_as_zero_not_as_blocking(make_facts):
-    """Regression test for a real bug: the first version of this fix required
-    rnd_expense strictly non-None, one guard stricter than Trellis's own
-    validated derivation (`data.get("rnd_expense", 0.0)`). On live data this
-    made RAD (a pharmacy retailer, no distinct R&D line) fall through to the
+    """Requiring rnd_expense strictly non-None is one guard stricter than Trellis's
+    own validated derivation (`data.get("rnd_expense", 0.0)`). On live data that
+    would make RAD (a pharmacy retailer, no distinct R&D line) fall through to the
     weaker pretax-based path and disagree with Trellis by -410%, and NKE by
     +1.4% -- both companies simply don't tag rnd_expense, which is a real,
     common, economically meaningful zero (no R&D spend), not missing data."""
